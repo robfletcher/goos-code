@@ -1,3 +1,8 @@
 /build/
+
 /.gradle/
 .gradletasknamecache
+
+/out/
+/.idea/workspace.xml
+/.idea/tasks.xml
