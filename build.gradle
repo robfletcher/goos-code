@@ -22,9 +22,10 @@ dependencies {
 				'junit:junit-dep:4.6',
 				'org.jmock:jmock-legacy:2.6.0',
 				'org.jmock:jmock-junit4:2.6.0',
-				'com.googlecode.windowlicker:windowlicker-swing:r268',
 				files('lib/develop/hamcrest-core-SNAPSHOT.jar'),
 				files('lib/develop/hamcrest-library-SNAPSHOT.jar'),
+				files('lib/develop/windowlicker-core-DEV.jar'),
+				files('lib/develop/windowlicker-swing-DEV.jar'),
 				'org.spockframework:spock-core:0.7-groovy-2.0'
 
 	testRuntime 'cglib:cglib-nodep:2.2'
