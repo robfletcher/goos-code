@@ -3,7 +3,7 @@ package test.auctionsniper
 import auctionsniper.*
 import auctionsniper.AuctionEventListener.PriceSource
 import org.hamcrest.*
-import spock.extensions.state.InteractionState
+import spock.extensions.state.StateMachine
 import spock.lang.Specification
 import static auctionsniper.SniperState.*
 import static org.hamcrest.Matchers.equalTo
@@ -12,13 +12,15 @@ class AuctionSniperSpec extends Specification {
 
 	protected static final String ITEM_ID = "item-id"
 	public static final UserRequestListener.Item ITEM = new UserRequestListener.Item(ITEM_ID, 1234)
-	def sniperState = new InteractionState<SniperState>(JOINING)
+	def sniperState = new StateMachine<SniperState>("sniper")
 	def auction = Mock(Auction)
 	def sniperListener = Mock(SniperListener)
 	def sniper = new AuctionSniper(ITEM, auction)
 
 	void setup() {
 		sniper.addSniperListener sniperListener
+
+		sniperState.startsAs(JOINING)
 	}
 
 	void "has initial state of joining"() {
@@ -78,7 +80,7 @@ class AuctionSniperSpec extends Specification {
 
 		then:
 		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 2345, bid, LOSING)) >> {
-			assert sniperState == BIDDING
+			sniperState.is(BIDDING)
 		}
 
 		where:
@@ -97,7 +99,7 @@ class AuctionSniperSpec extends Specification {
 
 		then:
 		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, price, bid, LOSING)) >> {
-			assert sniperState == WINNING
+			sniperState.is(WINNING)
 		}
 
 		where:
@@ -132,7 +134,7 @@ class AuctionSniperSpec extends Specification {
 
 		then:
 		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 123, 168, LOST)) >> {
-			assert sniperState == BIDDING
+			sniperState.is(BIDDING)
 		}
 	}
 
@@ -146,7 +148,7 @@ class AuctionSniperSpec extends Specification {
 
 		then:
 		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 1230, 0, LOST)) >> {
-			assert sniperState == LOSING
+			sniperState.is(LOSING)
 		}
 	}
 
@@ -160,7 +162,7 @@ class AuctionSniperSpec extends Specification {
 
 		then:
 		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 135, 135, WINNING)) >> {
-			assert sniperState == BIDDING
+			sniperState.is(BIDDING)
 		}
 	}
 
@@ -176,7 +178,7 @@ class AuctionSniperSpec extends Specification {
 
 		then:
 		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 135, 135, WON)) >> {
-			assert sniperState == WINNING
+			sniperState.is(WINNING)
 		}
 	}
 
@@ -193,7 +195,7 @@ class AuctionSniperSpec extends Specification {
 	}
 
 	private void allowSniperStateChange(SniperState newState) {
-		sniperListener.sniperStateChanged(aSniperThatIs(newState)) >> { sniperState = newState }
+		sniperListener.sniperStateChanged(aSniperThatIs(newState)) >> { sniperState.becomes(newState) }
 	}
 
 	private Matcher<SniperSnapshot> aSniperThatIs(final SniperState state) {
