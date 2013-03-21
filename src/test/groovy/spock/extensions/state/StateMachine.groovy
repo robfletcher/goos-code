@@ -5,12 +5,8 @@ class StateMachine<E extends Enum> {
 	private final String name
 	private E currentState
 
-	StateMachine(String name) {
+	StateMachine(String name, E initialState) {
 		this.name = name
-	}
-
-	void startsAs(E initialState) {
-		if (currentState) throw new IllegalStateException()
 		currentState = initialState
 	}
 
@@ -20,6 +16,10 @@ class StateMachine<E extends Enum> {
 
 	void is(E expectedState) {
 		assert currentState == expectedState, "$name state should be $expectedState but is $currentState"
+	}
+
+	void isNot(E expectedState) {
+		assert currentState != expectedState, "$name state should not be $expectedState but it is"
 	}
 
 }

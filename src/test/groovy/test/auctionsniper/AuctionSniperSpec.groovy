@@ -12,15 +12,13 @@ class AuctionSniperSpec extends Specification {
 
 	protected static final String ITEM_ID = "item-id"
 	public static final UserRequestListener.Item ITEM = new UserRequestListener.Item(ITEM_ID, 1234)
-	def sniperState = new StateMachine<SniperState>("sniper")
+	def sniperState = new StateMachine<SniperState>("sniper", JOINING)
 	def auction = Mock(Auction)
 	def sniperListener = Mock(SniperListener)
 	def sniper = new AuctionSniper(ITEM, auction)
 
 	void setup() {
 		sniper.addSniperListener sniperListener
-
-		sniperState.startsAs(JOINING)
 	}
 
 	void "has initial state of joining"() {
