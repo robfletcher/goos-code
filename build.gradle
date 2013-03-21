@@ -1,25 +1,33 @@
-apply plugin: 'groovy'
+apply plugin: 'java'
+//apply plugin: 'groovy'
 
 repositories {
 	mavenCentral()
 }
 
+configurations {
+	testCompile.exclude module: 'hamcrest-all'
+	testCompile.exclude module: 'hamcrest-core'
+	testCompile.exclude module: 'hamcrest-library'
+}
+
 dependencies {
 
-	groovy 'org.codehaus.groovy:groovy-all:2.1.2'
+//	groovy 'org.codehaus.groovy:groovy-all:2.1.2'
 
 	compile 'commons-io:commons-io:1.4',
 			'commons-lang:commons-lang:2.4',
-			'jivesoftware:smack:3.1.0',
 			'jivesoftware:smackx:3.1.0'
 
-	testCompile 'org.spockframework:spock-core:0.7-groovy-2.0',
-				'org.jmock:jmock-junit4:2.6.0',
+	testCompile 'junit:junit:4.6',
+				'junit:junit-dep:4.6',
 				'org.jmock:jmock-legacy:2.6.0',
-				'org.hamcrest:hamcrest-library:1.2',
-				'org.hamcrest:hamcrest-core:1.2'
+				'org.jmock:jmock-junit4:2.6.0',
+				'com.googlecode.windowlicker:windowlicker-swing:r268',
+				files('lib/develop/hamcrest-core-SNAPSHOT.jar'),
+				files('lib/develop/hamcrest-library-SNAPSHOT.jar')
+	//'org.spockframework:spock-core:0.7-groovy-2.0',
 
-	testRuntime 'cglib:cglib-nodep:2.2',
-				'com.googlecode.windowlicker:windowlicker-swing:r268'
+	testRuntime 'cglib:cglib-nodep:2.2'
 
 }
