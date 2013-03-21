@@ -2,9 +2,7 @@ package test.auctionsniper
 
 import auctionsniper.*
 import auctionsniper.AuctionEventListener.PriceSource
-import org.hamcrest.FeatureMatcher
-import org.hamcrest.Matcher
-import org.jmock.Expectations
+import org.hamcrest.*
 import spock.lang.Specification
 import static auctionsniper.SniperState.*
 import static org.hamcrest.Matchers.equalTo
@@ -71,14 +69,16 @@ class AuctionSniperSpec extends Specification {
 
 	void "does not bid and reports losing if subsequent price is above stop price"() {
 		given:
-		sniperListener.sniperStateChanged(aSniperThatIs(BIDDING)) >> { sniperState = BIDDING }
+		allowingSniperBidding()
 
 		when:
 		sniper.currentPrice(123, 45, PriceSource.FromOtherBidder)
 		sniper.currentPrice(2345, 25, PriceSource.FromOtherBidder)
 
 		then:
-		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 2345, bid, LOSING)) >> { assert sniperState == BIDDING }
+		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 2345, bid, LOSING)) >> {
+			assert sniperState == BIDDING
+		}
 
 		where:
 		bid = 123 + 45
@@ -86,8 +86,8 @@ class AuctionSniperSpec extends Specification {
 
 	void "does not bid and reports losing if price after winning is above stop price"() {
 		given:
-		sniperListener.sniperStateChanged(aSniperThatIs(BIDDING)) >> { sniperState = BIDDING }
-		sniperListener.sniperStateChanged(aSniperThatIs(WINNING)) >> { sniperState = WINNING }
+		allowingSniperBidding()
+		allowingSniperWinning()
 
 		when:
 		sniper.currentPrice(123, 45, PriceSource.FromOtherBidder)
@@ -95,7 +95,9 @@ class AuctionSniperSpec extends Specification {
 		sniper.currentPrice(price, increment, PriceSource.FromOtherBidder)
 
 		then:
-		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, price, bid, LOSING)) >> { assert sniperState == WINNING }
+		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, price, bid, LOSING)) >> {
+			assert sniperState == WINNING
+		}
 
 		where:
 		price = 1233
@@ -121,44 +123,50 @@ class AuctionSniperSpec extends Specification {
 
 	void "reports lost if auction closes when bidding"() {
 		given:
-		sniperListener.sniperStateChanged(aSniperThatIs(BIDDING)) >> { sniperState = BIDDING }
+		allowingSniperBidding()
 
 		when:
 		sniper.currentPrice(123, 45, PriceSource.FromOtherBidder)
 		sniper.auctionClosed()
 
 		then:
-		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 123, 168, LOST)) >> { assert sniperState == BIDDING }
+		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 123, 168, LOST)) >> {
+			assert sniperState == BIDDING
+		}
 	}
 
 	void "reports lost if auction closes when losing"() {
 		given:
-		sniperListener.sniperStateChanged(aSniperThatIs(LOSING)) >> { sniperState = LOSING }
+		allowingSniperLosing()
 
 		when:
 		sniper.currentPrice(1230, 456, PriceSource.FromOtherBidder)
 		sniper.auctionClosed()
 
 		then:
-		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 1230, 0, LOST)) >> { assert sniperState == LOSING }
+		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 1230, 0, LOST)) >> {
+			assert sniperState == LOSING
+		}
 	}
 
 	void "reports is winning when current price comes from sniper"() {
 		given:
-		sniperListener.sniperStateChanged(aSniperThatIs(BIDDING)) >> { sniperState = BIDDING }
+		allowingSniperBidding()
 
 		when:
 		sniper.currentPrice(123, 12, PriceSource.FromOtherBidder)
 		sniper.currentPrice(135, 45, PriceSource.FromSniper)
 
 		then:
-		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 135, 135, WINNING)) >> { assert sniperState == BIDDING }
+		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 135, 135, WINNING)) >> {
+			assert sniperState == BIDDING
+		}
 	}
 
 	void "reports won if auction closes when winning"() {
 		given:
-		sniperListener.sniperStateChanged(aSniperThatIs(BIDDING)) >> { sniperState = BIDDING }
-		sniperListener.sniperStateChanged(aSniperThatIs(WINNING)) >> { sniperState = WINNING }
+		allowingSniperBidding()
+		allowingSniperWinning()
 
 		when:
 		sniper.currentPrice(123, 12, PriceSource.FromOtherBidder)
@@ -166,7 +174,25 @@ class AuctionSniperSpec extends Specification {
 		sniper.auctionClosed()
 
 		then:
-		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 135, 135, WON)) >> { assert sniperState == WINNING }
+		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 135, 135, WON)) >> {
+			assert sniperState == WINNING
+		}
+	}
+
+	private void allowingSniperBidding() {
+		allowSniperStateChange(BIDDING)
+	}
+
+	private void allowingSniperWinning() {
+		allowSniperStateChange(WINNING)
+	}
+
+	private void allowingSniperLosing() {
+		allowSniperStateChange(LOSING)
+	}
+
+	private void allowSniperStateChange(SniperState newState) {
+		sniperListener.sniperStateChanged(aSniperThatIs(newState)) >> { sniperState = newState }
 	}
 
 	private Matcher<SniperSnapshot> aSniperThatIs(final SniperState state) {
