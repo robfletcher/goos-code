@@ -2,9 +2,8 @@ package test.auctionsniper
 
 import auctionsniper.*
 import auctionsniper.AuctionEventListener.PriceSource
-import org.hamcrest.FeatureMatcher
-import org.hamcrest.Matcher
-import org.jmock.Expectations
+import org.hamcrest.*
+import spock.extensions.state.InteractionState
 import spock.lang.Specification
 import static auctionsniper.SniperState.*
 import static org.hamcrest.Matchers.equalTo
@@ -13,7 +12,7 @@ class AuctionSniperSpec extends Specification {
 
 	protected static final String ITEM_ID = "item-id"
 	public static final UserRequestListener.Item ITEM = new UserRequestListener.Item(ITEM_ID, 1234)
-	def sniperState = SniperState.JOINING
+	def sniperState = new InteractionState<SniperState>(JOINING)
 	def auction = Mock(Auction)
 	def sniperListener = Mock(SniperListener)
 	def sniper = new AuctionSniper(ITEM, auction)
@@ -71,14 +70,14 @@ class AuctionSniperSpec extends Specification {
 
 	void "does not bid and reports losing if subsequent price is above stop price"() {
 		given:
-		sniperListener.sniperStateChanged(aSniperThatIs(BIDDING)) >> { sniperState = BIDDING }
+		sniperListener.sniperStateChanged(aSniperThatIs(BIDDING)) >> sniperState.becomes(BIDDING)
 
 		when:
 		sniper.currentPrice(123, 45, PriceSource.FromOtherBidder)
 		sniper.currentPrice(2345, 25, PriceSource.FromOtherBidder)
 
 		then:
-		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 2345, bid, LOSING)) >> { assert sniperState == BIDDING }
+		(1.._) * sniperListener.sniperStateChanged(new SniperSnapshot(ITEM_ID, 2345, bid, LOSING)) >> sniperState.when(BIDDING)
 
 		where:
 		bid = 123 + 45
