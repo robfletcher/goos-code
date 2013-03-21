@@ -2,11 +2,9 @@ package test.auctionsniper
 
 import auctionsniper.*
 import auctionsniper.AuctionEventListener.PriceSource
-import org.hamcrest.*
 import spock.extensions.state.StateMachine
 import spock.lang.Specification
 import static auctionsniper.SniperState.*
-import static org.hamcrest.Matchers.equalTo
 
 class AuctionSniperSpec extends Specification {
 
@@ -23,7 +21,7 @@ class AuctionSniperSpec extends Specification {
 
 	void "has initial state of joining"() {
 		expect:
-		with(sniper.getSnapshot()) {
+		with(sniper.snapshot) {
 			itemId == expected.itemId
 			lastBid == expected.lastBid
 			lastPrice == expected.lastPrice
@@ -193,15 +191,6 @@ class AuctionSniperSpec extends Specification {
 	}
 
 	private void allowSniperStateChange(SniperState newState) {
-		sniperListener.sniperStateChanged(aSniperThatIs(newState)) >> { sniperState.becomes(newState) }
-	}
-
-	private Matcher<SniperSnapshot> aSniperThatIs(final SniperState state) {
-		new FeatureMatcher<SniperSnapshot, SniperState>(equalTo(state), "sniper that is ", "was") {
-			@Override
-			protected SniperState featureValueOf(SniperSnapshot actual) {
-				actual.state
-			}
-		}
+		sniperListener.sniperStateChanged({ it.state == newState }) >> { sniperState.becomes(newState) }
 	}
 }
